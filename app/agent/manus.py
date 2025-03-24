@@ -13,7 +13,6 @@ from app.tool.browser_use_tool import BrowserUseTool
 from app.tool.python_execute import PythonExecute
 from app.tool.str_replace_editor import StrReplaceEditor
 
-
 initial_working_directory = Path(os.getcwd()) / "workspace"
 
 
@@ -83,7 +82,7 @@ class Manus(ToolCallAgent):
         # Modify the next_step_prompt temporarily
         original_prompt = self.next_step_prompt
         if browser_state and not browser_state.get("error"):
-            self.next_step_prompt += f"\nCurrent browser state:\nURL: {browser_state.get('url', 'N/A')}\nTitle: {browser_state.get('title', 'N/A')}\n"
+            self.next_step_prompt += f"\n当前浏览器状态:\nURL: {browser_state.get('url', 'N/A')}\n标题: {browser_state.get('title', 'N/A')}\n"
 
         # Call parent implementation
         result = await super().think()
