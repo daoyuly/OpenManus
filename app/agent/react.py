@@ -24,15 +24,15 @@ class ReActAgent(BaseAgent, ABC):
 
     @abstractmethod
     async def think(self) -> bool:
-        """Process current state and decide next action"""
+        """处理当前状态并决定下一步行动"""
 
     @abstractmethod
     async def act(self) -> str:
-        """Execute decided actions"""
+        """执行决定的行动"""
 
     async def step(self) -> str:
-        """Execute a single step: think and act."""
+        """执行单个步骤：思考和行动。"""
         should_act = await self.think()
         if not should_act:
-            return "Thinking complete - no action needed"
+            return "思考完成 - 无需行动"
         return await self.act()

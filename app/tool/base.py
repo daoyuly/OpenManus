@@ -13,15 +13,15 @@ class BaseTool(ABC, BaseModel):
         arbitrary_types_allowed = True
 
     async def __call__(self, **kwargs) -> Any:
-        """Execute the tool with given parameters."""
+        """使用给定参数执行工具。"""
         return await self.execute(**kwargs)
 
     @abstractmethod
     async def execute(self, **kwargs) -> Any:
-        """Execute the tool with given parameters."""
+        """使用给定参数执行工具。"""
 
     def to_param(self) -> Dict:
-        """Convert tool to function call format."""
+        """将工具转换为函数调用格式。"""
         return {
             "type": "function",
             "function": {
@@ -33,7 +33,7 @@ class BaseTool(ABC, BaseModel):
 
 
 class ToolResult(BaseModel):
-    """Represents the result of a tool execution."""
+    """表示工具执行的结果。"""
 
     output: Any = Field(default=None)
     error: Optional[str] = Field(default=None)
@@ -53,7 +53,7 @@ class ToolResult(BaseModel):
             if field and other_field:
                 if concatenate:
                     return field + other_field
-                raise ValueError("Cannot combine tool results")
+                raise ValueError("无法合并工具结果")
             return field or other_field
 
         return ToolResult(
@@ -64,17 +64,16 @@ class ToolResult(BaseModel):
         )
 
     def __str__(self):
-        return f"Error: {self.error}" if self.error else self.output
+        return f"错误: {self.error}" if self.error else self.output
 
     def replace(self, **kwargs):
-        """Returns a new ToolResult with the given fields replaced."""
-        # return self.copy(update=kwargs)
+        """返回一个新的ToolResult，其中指定的字段被替换。"""
         return type(self)(**{**self.dict(), **kwargs})
 
 
 class CLIResult(ToolResult):
-    """A ToolResult that can be rendered as a CLI output."""
+    """一个可以作为CLI输出渲染的ToolResult。"""
 
 
 class ToolFailure(ToolResult):
-    """A ToolResult that represents a failure."""
+    """一个表示失败的ToolResult。"""

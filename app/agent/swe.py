@@ -8,10 +8,10 @@ from app.tool import Bash, StrReplaceEditor, Terminate, ToolCollection
 
 
 class SWEAgent(ToolCallAgent):
-    """An agent that implements the SWEAgent paradigm for executing code and natural conversations."""
+    """一个实现SWEAgent范式的代理，用于执行代码和自然对话。"""
 
     name: str = "swe"
-    description: str = "an autonomous AI programmer that interacts directly with the computer to solve tasks."
+    description: str = "一个自主的AI程序员，直接与计算机交互以解决任务。"
 
     system_prompt: str = SYSTEM_PROMPT
     next_step_prompt: str = NEXT_STEP_TEMPLATE
@@ -27,8 +27,8 @@ class SWEAgent(ToolCallAgent):
     working_dir: str = "."
 
     async def think(self) -> bool:
-        """Process current state and decide next action"""
-        # Update working directory
+        """处理当前状态并决定下一步行动"""
+        # 更新工作目录
         self.working_dir = await self.bash.execute("pwd")
         self.next_step_prompt = self.next_step_prompt.format(
             current_dir=self.working_dir

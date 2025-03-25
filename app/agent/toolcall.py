@@ -7,18 +7,18 @@ from app.agent.react import ReActAgent
 from app.exceptions import TokenLimitExceeded
 from app.logger import logger
 from app.prompt.toolcall import NEXT_STEP_PROMPT, SYSTEM_PROMPT
-from app.schema import TOOL_CHOICE_TYPE, AgentState, Message, ToolCall, ToolChoice
+from app.schema import (TOOL_CHOICE_TYPE, AgentState, Message, ToolCall,
+                        ToolChoice)
 from app.tool import CreateChatCompletion, Terminate, ToolCollection
 
-
-TOOL_CALL_REQUIRED = "Tool calls required but none provided"
+TOOL_CALL_REQUIRED = "需要工具调用但未提供"
 
 
 class ToolCallAgent(ReActAgent):
-    """Base agent class for handling tool/function calls with enhanced abstraction"""
+    """处理工具/函数调用的基础代理类，具有增强的抽象能力"""
 
     name: str = "toolcall"
-    description: str = "an agent that can execute tool calls."
+    description: str = "一个可以执行工具调用的代理。"
 
     system_prompt: str = SYSTEM_PROMPT
     next_step_prompt: str = NEXT_STEP_PROMPT
@@ -36,13 +36,13 @@ class ToolCallAgent(ReActAgent):
     max_observe: Optional[Union[int, bool]] = None
 
     async def think(self) -> bool:
-        """Process current state and decide next actions using tools"""
+        """处理当前状态并使用工具决定下一步行动"""
         if self.next_step_prompt:
             user_msg = Message.user_message(self.next_step_prompt)
             self.messages += [user_msg]
 
         try:
-            # Get response with tool options
+            # 获取带有工具选项的响应
             response = await self.llm.ask_tool(
                 messages=self.messages,
                 system_msgs=(
@@ -56,15 +56,15 @@ class ToolCallAgent(ReActAgent):
         except ValueError:
             raise
         except Exception as e:
-            # Check if this is a RetryError containing TokenLimitExceeded
+            # 检查是否是包含TokenLimitExceeded的RetryError
             if hasattr(e, "__cause__") and isinstance(e.__cause__, TokenLimitExceeded):
                 token_limit_error = e.__cause__
                 logger.error(
-                    f"🚨 Token limit error (from RetryError): {token_limit_error}"
+                    f"🚨 令牌限制错误（来自RetryError）: {token_limit_error}"
                 )
                 self.memory.add_message(
                     Message.assistant_message(
-                        f"Maximum token limit reached, cannot continue execution: {str(token_limit_error)}"
+                        f"达到最大令牌限制，无法继续执行: {str(token_limit_error)}"
                     )
                 )
                 self.state = AgentState.FINISHED
@@ -73,32 +73,32 @@ class ToolCallAgent(ReActAgent):
 
         self.tool_calls = response.tool_calls
 
-        # Log response info
-        logger.info(f"✨ {self.name}'s thoughts: {response.content}")
+        # 记录响应信息
+        logger.info(f"✨ {self.name}的想法: {response.content}")
         logger.info(
-            f"🛠️ {self.name} selected {len(response.tool_calls) if response.tool_calls else 0} tools to use"
+            f"🛠️ {self.name}选择了 {len(response.tool_calls) if response.tool_calls else 0} 个工具使用"
         )
         if response.tool_calls:
             logger.info(
-                f"🧰 Tools being prepared: {[call.function.name for call in response.tool_calls]}"
+                f"🧰 准备使用的工具: {[call.function.name for call in response.tool_calls]}"
             )
             logger.info(
-                f"🔧 Tool arguments: {response.tool_calls[0].function.arguments}"
+                f"🔧 工具参数: {response.tool_calls[0].function.arguments}"
             )
 
         try:
-            # Handle different tool_choices modes
+            # 处理不同的tool_choices模式
             if self.tool_choices == ToolChoice.NONE:
                 if response.tool_calls:
                     logger.warning(
-                        f"🤔 Hmm, {self.name} tried to use tools when they weren't available!"
+                        f"🤔 嗯，{self.name}在工具不可用时尝试使用工具！"
                     )
                 if response.content:
                     self.memory.add_message(Message.assistant_message(response.content))
                     return True
                 return False
 
-            # Create and add assistant message
+            # 创建并添加助手消息
             assistant_msg = (
                 Message.from_tool_calls(
                     content=response.content, tool_calls=self.tool_calls
@@ -109,34 +109,34 @@ class ToolCallAgent(ReActAgent):
             self.memory.add_message(assistant_msg)
 
             if self.tool_choices == ToolChoice.REQUIRED and not self.tool_calls:
-                return True  # Will be handled in act()
+                return True  # 将在act()中处理
 
-            # For 'auto' mode, continue with content if no commands but content exists
+            # 对于'auto'模式，如果没有命令但有内容，则继续处理内容
             if self.tool_choices == ToolChoice.AUTO and not self.tool_calls:
                 return bool(response.content)
 
             return bool(self.tool_calls)
         except Exception as e:
-            logger.error(f"🚨 Oops! The {self.name}'s thinking process hit a snag: {e}")
+            logger.error(f"🚨 哎呀！{self.name}的思考过程遇到了问题: {e}")
             self.memory.add_message(
                 Message.assistant_message(
-                    f"Error encountered while processing: {str(e)}"
+                    f"处理过程中遇到错误: {str(e)}"
                 )
             )
             return False
 
     async def act(self) -> str:
-        """Execute tool calls and handle their results"""
+        """执行工具调用并处理其结果"""
         if not self.tool_calls:
             if self.tool_choices == ToolChoice.REQUIRED:
                 raise ValueError(TOOL_CALL_REQUIRED)
 
-            # Return last message content if no tool calls
-            return self.messages[-1].content or "No content or commands to execute"
+            # 如果没有工具调用，返回最后一条消息的内容
+            return self.messages[-1].content or "没有内容或命令可执行"
 
         results = []
         for command in self.tool_calls:
-            # Reset base64_image for each tool call
+            # 为每个工具调用重置base64_image
             self._current_base64_image = None
 
             result = await self.execute_tool(command)
@@ -145,10 +145,10 @@ class ToolCallAgent(ReActAgent):
                 result = result[: self.max_observe]
 
             logger.info(
-                f"🎯 Tool '{command.function.name}' completed its mission! Result: {result}"
+                f"🎯 工具 '{command.function.name}' 完成了它的任务！结果: {result}"
             )
 
-            # Add tool response to memory
+            # 将工具响应添加到内存
             tool_msg = Message.tool_message(
                 content=result,
                 tool_call_id=command.id,
@@ -161,72 +161,72 @@ class ToolCallAgent(ReActAgent):
         return "\n\n".join(results)
 
     async def execute_tool(self, command: ToolCall) -> str:
-        """Execute a single tool call with robust error handling"""
+        """执行单个工具调用，具有健壮的错误处理"""
         if not command or not command.function or not command.function.name:
-            return "Error: Invalid command format"
+            return "错误: 无效的命令格式"
 
         name = command.function.name
         if name not in self.available_tools.tool_map:
-            return f"Error: Unknown tool '{name}'"
+            return f"错误: 未知工具 '{name}'"
 
         try:
-            # Parse arguments
+            # 解析参数
             args = json.loads(command.function.arguments or "{}")
 
-            # Execute the tool
-            logger.info(f"🔧 Activating tool: '{name}'...")
+            # 执行工具
+            logger.info(f"🔧 激活工具: '{name}'...")
             result = await self.available_tools.execute(name=name, tool_input=args)
 
-            # Handle special tools
+            # 处理特殊工具
             await self._handle_special_tool(name=name, result=result)
 
-            # Check if result is a ToolResult with base64_image
+            # 检查结果是否是带有base64_image的ToolResult
             if hasattr(result, "base64_image") and result.base64_image:
-                # Store the base64_image for later use in tool_message
+                # 存储base64_image以供后续在tool_message中使用
                 self._current_base64_image = result.base64_image
 
-                # Format result for display
+                # 格式化结果以供显示
                 observation = (
-                    f"Observed output of cmd `{name}` executed:\n{str(result)}"
+                    f"观察到命令 `{name}` 执行的输出:\n{str(result)}"
                     if result
-                    else f"Cmd `{name}` completed with no output"
+                    else f"命令 `{name}` 完成，无输出"
                 )
                 return observation
 
-            # Format result for display (standard case)
+            # 格式化结果以供显示（标准情况）
             observation = (
-                f"Observed output of cmd `{name}` executed:\n{str(result)}"
+                f"观察到命令 `{name}` 执行的输出:\n{str(result)}"
                 if result
-                else f"Cmd `{name}` completed with no output"
+                else f"命令 `{name}` 完成，无输出"
             )
 
             return observation
         except json.JSONDecodeError:
-            error_msg = f"Error parsing arguments for {name}: Invalid JSON format"
+            error_msg = f"解析 {name} 的参数时出错: 无效的JSON格式"
             logger.error(
-                f"📝 Oops! The arguments for '{name}' don't make sense - invalid JSON, arguments:{command.function.arguments}"
+                f"📝 哎呀！'{name}'的参数没有意义 - 无效的JSON，参数:{command.function.arguments}"
             )
-            return f"Error: {error_msg}"
+            return f"错误: {error_msg}"
         except Exception as e:
-            error_msg = f"⚠️ Tool '{name}' encountered a problem: {str(e)}"
+            error_msg = f"⚠️ 工具 '{name}' 遇到了问题: {str(e)}"
             logger.error(error_msg)
-            return f"Error: {error_msg}"
+            return f"错误: {error_msg}"
 
     async def _handle_special_tool(self, name: str, result: Any, **kwargs):
-        """Handle special tool execution and state changes"""
+        """处理特殊工具执行和状态更改"""
         if not self._is_special_tool(name):
             return
 
         if self._should_finish_execution(name=name, result=result, **kwargs):
-            # Set agent state to finished
-            logger.info(f"🏁 Special tool '{name}' has completed the task!")
+            # 将代理状态设置为已完成
+            logger.info(f"🏁 特殊工具 '{name}' 已完成任务！")
             self.state = AgentState.FINISHED
 
     @staticmethod
     def _should_finish_execution(**kwargs) -> bool:
-        """Determine if tool execution should finish the agent"""
+        """确定工具执行是否应该结束代理"""
         return True
 
     def _is_special_tool(self, name: str) -> bool:
-        """Check if tool name is in special tools list"""
+        """检查工具名称是否在特殊工具列表中"""
         return name.lower() in [n.lower() for n in self.special_tool_names]

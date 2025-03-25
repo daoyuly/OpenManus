@@ -7,16 +7,16 @@ from app.tool.base import BaseTool
 
 
 class PythonExecute(BaseTool):
-    """A tool for executing Python code with timeout and safety restrictions."""
+    """一个用于执行Python代码的工具，具有超时和安全限制。"""
 
     name: str = "python_execute"
-    description: str = "Executes Python code string. Note: Only print outputs are visible, function return values are not captured. Use print statements to see results."
+    description: str = "执行Python代码字符串。注意：只有print输出可见，函数返回值不会被捕获。使用print语句来查看结果。"
     parameters: dict = {
         "type": "object",
         "properties": {
             "code": {
                 "type": "string",
-                "description": "The Python code to execute.",
+                "description": "要执行的Python代码。",
             },
         },
         "required": ["code"],
@@ -42,14 +42,14 @@ class PythonExecute(BaseTool):
         timeout: int = 5,
     ) -> Dict:
         """
-        Executes the provided Python code with a timeout.
+        使用超时限制执行提供的Python代码。
 
-        Args:
-            code (str): The Python code to execute.
-            timeout (int): Execution timeout in seconds.
+        参数:
+            code (str): 要执行的Python代码。
+            timeout (int): 执行超时时间（秒）。
 
-        Returns:
-            Dict: Contains 'output' with execution output or error message and 'success' status.
+        返回:
+            Dict: 包含执行输出或错误消息的'output'和成功状态的'success'。
         """
 
         with multiprocessing.Manager() as manager:
@@ -64,12 +64,12 @@ class PythonExecute(BaseTool):
             proc.start()
             proc.join(timeout)
 
-            # timeout process
+            # 超时进程
             if proc.is_alive():
                 proc.terminate()
                 proc.join(1)
                 return {
-                    "observation": f"Execution timeout after {timeout} seconds",
+                    "observation": f"执行超时，超过 {timeout} 秒",
                     "success": False,
                 }
             return dict(result)

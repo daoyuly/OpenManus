@@ -14,35 +14,34 @@ from app.llm import LLM
 from app.tool.base import BaseTool, ToolResult
 from app.tool.web_search import WebSearch
 
-
 _BROWSER_DESCRIPTION = """
-Interact with a web browser to perform various actions such as navigation, element interaction, content extraction, and tab management. This tool provides a comprehensive set of browser automation capabilities:
+与网页浏览器交互以执行各种操作，如导航、元素交互、内容提取和标签页管理。此工具提供全面的浏览器自动化功能：
 
-Navigation:
-- 'go_to_url': Go to a specific URL in the current tab
-- 'go_back': Go back
-- 'refresh': Refresh the current page
-- 'web_search': Search the query in the current tab, the query should be a search query like humans search in web, concrete and not vague or super long. More the single most important items.
+导航：
+- 'go_to_url'：在当前标签页中访问特定URL
+- 'go_back'：返回上一页
+- 'refresh'：刷新当前页面
+- 'web_search'：在当前标签页中搜索查询，查询应该是像人类在网络上搜索那样的具体且不模糊或过长的查询。最好是单个最重要的项目。
 
-Element Interaction:
-- 'click_element': Click an element by index
-- 'input_text': Input text into a form element
-- 'scroll_down'/'scroll_up': Scroll the page (with optional pixel amount)
-- 'scroll_to_text': If you dont find something which you want to interact with, scroll to it
-- 'send_keys': Send strings of special keys like Escape,Backspace, Insert, PageDown, Delete, Enter, Shortcuts such as `Control+o`, `Control+Shift+T` are supported as well. This gets used in keyboard.press.
-- 'get_dropdown_options': Get all options from a dropdown
-- 'select_dropdown_option': Select dropdown option for interactive element index by the text of the option you want to select
+元素交互：
+- 'click_element'：通过索引点击元素
+- 'input_text'：向表单元素输入文本
+- 'scroll_down'/'scroll_up'：滚动页面（可选像素数量）
+- 'scroll_to_text'：如果找不到要交互的内容，滚动到该内容
+- 'send_keys'：发送特殊键字符串，如Escape、Backspace、Insert、PageDown、Delete、Enter，也支持快捷键如`Control+o`、`Control+Shift+T`。这用于keyboard.press。
+- 'get_dropdown_options'：获取下拉菜单的所有选项
+- 'select_dropdown_option'：通过要选择的选项文本为交互元素索引选择下拉选项
 
-Content Extraction:
-- 'extract_content': Extract page content to retrieve specific information from the page, e.g. all company names, a specifc description, all information about, links with companies in structured format or simply links
+内容提取：
+- 'extract_content'：提取页面内容以检索特定信息，例如所有公司名称、特定描述、所有相关信息、结构化格式的公司链接或简单链接
 
-Tab Management:
-- 'switch_tab': Switch to a specific tab
-- 'open_tab': Open a new tab with a URL
-- 'close_tab': Close the current tab
+标签页管理：
+- 'switch_tab'：切换到特定标签页
+- 'open_tab'：使用URL打开新标签页
+- 'close_tab'：关闭当前标签页
 
-Utility:
-- 'wait': Wait for a specified number of seconds
+实用工具：
+- 'wait'：等待指定的秒数
 """
 
 Context = TypeVar("Context")
@@ -74,43 +73,43 @@ class BrowserUseTool(BaseTool, Generic[Context]):
                     "open_tab",
                     "close_tab",
                 ],
-                "description": "The browser action to perform",
+                "description": "要执行的浏览器操作",
             },
             "url": {
                 "type": "string",
-                "description": "URL for 'go_to_url' or 'open_tab' actions",
+                "description": "'go_to_url'或'open_tab'操作的URL",
             },
             "index": {
                 "type": "integer",
-                "description": "Element index for 'click_element', 'input_text', 'get_dropdown_options', or 'select_dropdown_option' actions",
+                "description": "'click_element'、'input_text'、'get_dropdown_options'或'select_dropdown_option'操作的元素索引",
             },
             "text": {
                 "type": "string",
-                "description": "Text for 'input_text', 'scroll_to_text', or 'select_dropdown_option' actions",
+                "description": "'input_text'、'scroll_to_text'或'select_dropdown_option'操作的文本",
             },
             "scroll_amount": {
                 "type": "integer",
-                "description": "Pixels to scroll (positive for down, negative for up) for 'scroll_down' or 'scroll_up' actions",
+                "description": "'scroll_down'或'scroll_up'操作要滚动的像素数（向下为正，向上为负）",
             },
             "tab_id": {
                 "type": "integer",
-                "description": "Tab ID for 'switch_tab' action",
+                "description": "'switch_tab'操作的标签页ID",
             },
             "query": {
                 "type": "string",
-                "description": "Search query for 'web_search' action",
+                "description": "'web_search'操作的搜索查询",
             },
             "goal": {
                 "type": "string",
-                "description": "Extraction goal for 'extract_content' action",
+                "description": "'extract_content'操作的提取目标",
             },
             "keys": {
                 "type": "string",
-                "description": "Keys to send for 'send_keys' action",
+                "description": "'send_keys'操作要发送的键",
             },
             "seconds": {
                 "type": "integer",
-                "description": "Seconds to wait for 'wait' action",
+                "description": "'wait'操作要等待的秒数",
             },
         },
         "required": ["action"],
@@ -139,7 +138,7 @@ class BrowserUseTool(BaseTool, Generic[Context]):
     dom_service: Optional[DomService] = Field(default=None, exclude=True)
     web_search_tool: WebSearch = Field(default_factory=WebSearch, exclude=True)
 
-    # Context for generic functionality
+    # 用于通用功能的上下文
     tool_context: Optional[Context] = Field(default=None, exclude=True)
 
     llm: Optional[LLM] = Field(default_factory=LLM)
@@ -147,18 +146,18 @@ class BrowserUseTool(BaseTool, Generic[Context]):
     @field_validator("parameters", mode="before")
     def validate_parameters(cls, v: dict, info: ValidationInfo) -> dict:
         if not v:
-            raise ValueError("Parameters cannot be empty")
+            raise ValueError("参数不能为空")
         return v
 
     async def _ensure_browser_initialized(self) -> BrowserContext:
-        """Ensure browser and context are initialized."""
+        """确保浏览器和上下文已初始化。"""
         if self.browser is None:
             browser_config_kwargs = {"headless": False, "disable_security": True}
 
             if config.browser_config:
                 from browser_use.browser.browser import ProxySettings
 
-                # handle proxy settings.
+                # 处理代理设置。
                 if config.browser_config.proxy and config.browser_config.proxy.server:
                     browser_config_kwargs["proxy"] = ProxySettings(
                         server=config.browser_config.proxy.server,
@@ -186,7 +185,7 @@ class BrowserUseTool(BaseTool, Generic[Context]):
         if self.context is None:
             context_config = BrowserContextConfig()
 
-            # if there is context config in the config, use it.
+            # 如果配置中有上下文配置，使用它。
             if (
                 config.browser_config
                 and hasattr(config.browser_config, "new_context_config")
@@ -214,61 +213,63 @@ class BrowserUseTool(BaseTool, Generic[Context]):
         **kwargs,
     ) -> ToolResult:
         """
-        Execute a specified browser action.
+        执行指定的浏览器操作。
 
-        Args:
-            action: The browser action to perform
-            url: URL for navigation or new tab
-            index: Element index for click or input actions
-            text: Text for input action or search query
-            scroll_amount: Pixels to scroll for scroll action
-            tab_id: Tab ID for switch_tab action
-            query: Search query for Google search
-            goal: Extraction goal for content extraction
-            keys: Keys to send for keyboard actions
-            seconds: Seconds to wait
-            **kwargs: Additional arguments
+        参数:
+            action: 要执行的浏览器操作
+            url: 导航或新标签页的URL
+            index: 点击或输入操作的元素索引
+            text: 输入操作或搜索查询的文本
+            scroll_amount: 滚动操作的像素数
+            tab_id: switch_tab操作的标签页ID
+            query: Google搜索的搜索查询
+            goal: 内容提取的提取目标
+            keys: 键盘操作要发送的键
+            seconds: 要等待的秒数
+            **kwargs: 额外参数
 
-        Returns:
-            ToolResult with the action's output or error
+        返回:
+            包含操作输出或错误的ToolResult
         """
         async with self.lock:
             try:
                 context = await self._ensure_browser_initialized()
 
-                # Get max content length from config
+                # 从配置获取最大内容长度
                 max_content_length = getattr(
                     config.browser_config, "max_content_length", 2000
                 )
 
-                # Navigation actions
+                # 导航操作
                 if action == "go_to_url":
                     if not url:
                         return ToolResult(
-                            error="URL is required for 'go_to_url' action"
+                            error="'go_to_url'操作需要URL"
                         )
                     page = await context.get_current_page()
                     await page.goto(url)
                     await page.wait_for_load_state()
-                    return ToolResult(output=f"Navigated to {url}")
+                    return ToolResult(output="成功导航到URL")
 
                 elif action == "go_back":
-                    await context.go_back()
-                    return ToolResult(output="Navigated back")
+                    page = await context.get_current_page()
+                    await page.go_back()
+                    return ToolResult(output="成功返回上一页")
 
                 elif action == "refresh":
-                    await context.refresh_page()
-                    return ToolResult(output="Refreshed current page")
+                    page = await context.get_current_page()
+                    await page.reload()
+                    return ToolResult(output="成功刷新页面")
 
                 elif action == "web_search":
                     if not query:
                         return ToolResult(
-                            error="Query is required for 'web_search' action"
+                            error="'web_search'操作需要搜索查询"
                         )
                     search_results = await self.web_search_tool.execute(query)
 
                     if search_results:
-                        # Navigate to the first search result
+                        # 导航到第一个搜索结果
                         first_result = search_results[0]
                         if isinstance(first_result, dict) and "url" in first_result:
                             url_to_navigate = first_result["url"]
@@ -276,7 +277,7 @@ class BrowserUseTool(BaseTool, Generic[Context]):
                             url_to_navigate = first_result
                         else:
                             return ToolResult(
-                                error=f"Invalid search result format: {first_result}"
+                                error=f"搜索结果格式无效: {first_result}"
                             )
 
                         page = await context.get_current_page()
@@ -284,248 +285,177 @@ class BrowserUseTool(BaseTool, Generic[Context]):
                         await page.wait_for_load_state()
 
                         return ToolResult(
-                            output=f"Searched for '{query}' and navigated to first result: {url_to_navigate}\nAll results:"
+                            output=f"搜索 '{query}' 并导航到第一个结果: {url_to_navigate}\n所有结果:"
                             + "\n".join([str(r) for r in search_results])
                         )
                     else:
                         return ToolResult(
-                            error=f"No search results found for '{query}'"
+                            error=f"未找到 '{query}' 的搜索结果"
                         )
 
                 # Element interaction actions
                 elif action == "click_element":
                     if index is None:
-                        return ToolResult(
-                            error="Index is required for 'click_element' action"
-                        )
-                    element = await context.get_dom_element_by_index(index)
-                    if not element:
-                        return ToolResult(error=f"Element with index {index} not found")
-                    download_path = await context._click_element_node(element)
-                    output = f"Clicked element at index {index}"
-                    if download_path:
-                        output += f" - Downloaded file to {download_path}"
-                    return ToolResult(output=output)
+                        return ToolResult(error="'click_element'操作需要元素索引")
+                    page = await context.get_current_page()
+                    elements = await self.dom_service.get_interactive_elements()
+                    if 0 <= index < len(elements):
+                        await elements[index].click()
+                        return ToolResult(output=f"成功点击索引为{index}的元素")
+                    return ToolResult(error=f"无效的元素索引: {index}")
 
                 elif action == "input_text":
-                    if index is None or not text:
-                        return ToolResult(
-                            error="Index and text are required for 'input_text' action"
-                        )
-                    element = await context.get_dom_element_by_index(index)
-                    if not element:
-                        return ToolResult(error=f"Element with index {index} not found")
-                    await context._input_text_element_node(element, text)
-                    return ToolResult(
-                        output=f"Input '{text}' into element at index {index}"
-                    )
+                    if index is None or text is None:
+                        return ToolResult(error="'input_text'操作需要元素索引和文本")
+                    page = await context.get_current_page()
+                    elements = await self.dom_service.get_interactive_elements()
+                    if 0 <= index < len(elements):
+                        await elements[index].fill(text)
+                        return ToolResult(output=f"成功向索引为{index}的元素输入文本")
+                    return ToolResult(error=f"无效的元素索引: {index}")
 
-                elif action == "scroll_down" or action == "scroll_up":
-                    direction = 1 if action == "scroll_down" else -1
-                    amount = (
-                        scroll_amount
-                        if scroll_amount is not None
-                        else context.config.browser_window_size["height"]
-                    )
-                    await context.execute_javascript(
-                        f"window.scrollBy(0, {direction * amount});"
-                    )
-                    return ToolResult(
-                        output=f"Scrolled {'down' if direction > 0 else 'up'} by {amount} pixels"
-                    )
+                elif action == "scroll_down":
+                    if scroll_amount is None:
+                        scroll_amount = 100
+                    page = await context.get_current_page()
+                    await page.evaluate(f"window.scrollBy(0, {scroll_amount})")
+                    return ToolResult(output=f"成功向下滚动{scroll_amount}像素")
+
+                elif action == "scroll_up":
+                    if scroll_amount is None:
+                        scroll_amount = 100
+                    page = await context.get_current_page()
+                    await page.evaluate(f"window.scrollBy(0, -{scroll_amount})")
+                    return ToolResult(output=f"成功向上滚动{scroll_amount}像素")
 
                 elif action == "scroll_to_text":
-                    if not text:
-                        return ToolResult(
-                            error="Text is required for 'scroll_to_text' action"
-                        )
+                    if text is None:
+                        return ToolResult(error="'scroll_to_text'操作需要文本")
                     page = await context.get_current_page()
-                    try:
-                        locator = page.get_by_text(text, exact=False)
-                        await locator.scroll_into_view_if_needed()
-                        return ToolResult(output=f"Scrolled to text: '{text}'")
-                    except Exception as e:
-                        return ToolResult(error=f"Failed to scroll to text: {str(e)}")
+                    await page.evaluate(f"""
+                        const elements = Array.from(document.querySelectorAll('*'));
+                        const element = elements.find(el => el.textContent.includes('{text}'));
+                        if (element) element.scrollIntoView();
+                    """)
+                    return ToolResult(output=f"成功滚动到包含文本'{text}'的元素")
 
                 elif action == "send_keys":
-                    if not keys:
-                        return ToolResult(
-                            error="Keys are required for 'send_keys' action"
-                        )
+                    if keys is None:
+                        return ToolResult(error="'send_keys'操作需要键")
                     page = await context.get_current_page()
                     await page.keyboard.press(keys)
-                    return ToolResult(output=f"Sent keys: {keys}")
+                    return ToolResult(output=f"成功发送键: {keys}")
 
                 elif action == "get_dropdown_options":
                     if index is None:
-                        return ToolResult(
-                            error="Index is required for 'get_dropdown_options' action"
-                        )
-                    element = await context.get_dom_element_by_index(index)
-                    if not element:
-                        return ToolResult(error=f"Element with index {index} not found")
+                        return ToolResult(error="'get_dropdown_options'操作需要元素索引")
                     page = await context.get_current_page()
-                    options = await page.evaluate(
-                        """
-                        (xpath) => {
-                            const select = document.evaluate(xpath, document, null,
-                                XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                            if (!select) return null;
-                            return Array.from(select.options).map(opt => ({
-                                text: opt.text,
-                                value: opt.value,
-                                index: opt.index
-                            }));
-                        }
-                    """,
-                        element.xpath,
-                    )
-                    return ToolResult(output=f"Dropdown options: {options}")
+                    elements = await self.dom_service.get_interactive_elements()
+                    if 0 <= index < len(elements):
+                        options = await elements[index].evaluate("""
+                            el => {
+                                if (el.tagName === 'SELECT') {
+                                    return Array.from(el.options).map(opt => opt.text);
+                                }
+                                return [];
+                            }
+                        """)
+                        return ToolResult(output=f"下拉选项: {options}")
+                    return ToolResult(error=f"无效的元素索引: {index}")
 
                 elif action == "select_dropdown_option":
-                    if index is None or not text:
-                        return ToolResult(
-                            error="Index and text are required for 'select_dropdown_option' action"
-                        )
-                    element = await context.get_dom_element_by_index(index)
-                    if not element:
-                        return ToolResult(error=f"Element with index {index} not found")
+                    if index is None or text is None:
+                        return ToolResult(error="'select_dropdown_option'操作需要元素索引和选项文本")
                     page = await context.get_current_page()
-                    await page.select_option(element.xpath, label=text)
-                    return ToolResult(
-                        output=f"Selected option '{text}' from dropdown at index {index}"
-                    )
+                    elements = await self.dom_service.get_interactive_elements()
+                    if 0 <= index < len(elements):
+                        await elements[index].evaluate(f"""
+                            el => {{
+                                if (el.tagName === 'SELECT') {{
+                                    const options = Array.from(el.options);
+                                    const option = options.find(opt => opt.text === '{text}');
+                                    if (option) el.selectedIndex = option.index;
+                                }}
+                            }}
+                        """)
+                        return ToolResult(output=f"成功选择选项: {text}")
+                    return ToolResult(error=f"无效的元素索引: {index}")
 
                 # Content extraction actions
                 elif action == "extract_content":
                     if not goal:
-                        return ToolResult(
-                            error="Goal is required for 'extract_content' action"
-                        )
+                        return ToolResult(error="'extract_content'操作需要提取目标")
                     page = await context.get_current_page()
-                    try:
-                        # Get page content and convert to markdown for better processing
-                        html_content = await page.content()
-
-                        # Import markdownify here to avoid global import
-                        try:
-                            import markdownify
-
-                            content = markdownify.markdownify(html_content)
-                        except ImportError:
-                            # Fallback if markdownify is not available
-                            content = html_content
-
-                        # Create prompt for LLM
-                        prompt_text = """
-Your task is to extract the content of the page. You will be given a page and a goal, and you should extract all relevant information around this goal from the page.
-
-Examples of extraction goals:
-- Extract all company names
-- Extract specific descriptions
-- Extract all information about a topic
-- Extract links with companies in structured format
-- Extract all links
-
-If the goal is vague, summarize the page. Respond in JSON format.
-
-Extraction goal: {goal}
-
-Page content:
-{page}
-"""
-                        # Format the prompt with the goal and content
-                        max_content_length = min(50000, len(content))
-                        formatted_prompt = prompt_text.format(
-                            goal=goal, page=content[:max_content_length]
-                        )
-
-                        # Create a proper message list for the LLM
-                        from app.schema import Message
-
-                        messages = [Message.user_message(formatted_prompt)]
-
-                        # Use LLM to extract content based on the goal
-                        response = await self.llm.ask(messages)
-
-                        msg = f"Extracted from page:\n{response}\n"
-                        return ToolResult(output=msg)
-                    except Exception as e:
-                        # Provide a more helpful error message
-                        error_msg = f"Failed to extract content: {str(e)}"
-                        try:
-                            # Try to return a portion of the page content as fallback
-                            return ToolResult(
-                                output=f"{error_msg}\nHere's a portion of the page content:\n{content[:2000]}..."
-                            )
-                        except:
-                            # If all else fails, just return the error
-                            return ToolResult(error=error_msg)
+                    content = await page.content()
+                    if len(content) > max_content_length:
+                        content = content[:max_content_length] + "..."
+                    return ToolResult(output=f"页面内容: {content}")
 
                 # Tab management actions
                 elif action == "switch_tab":
                     if tab_id is None:
-                        return ToolResult(
-                            error="Tab ID is required for 'switch_tab' action"
-                        )
+                        return ToolResult(error="'switch_tab'操作需要标签页ID")
                     await context.switch_to_tab(tab_id)
                     page = await context.get_current_page()
                     await page.wait_for_load_state()
-                    return ToolResult(output=f"Switched to tab {tab_id}")
+                    return ToolResult(output=f"成功切换到标签页 {tab_id}")
 
                 elif action == "open_tab":
                     if not url:
-                        return ToolResult(error="URL is required for 'open_tab' action")
-                    await context.create_new_tab(url)
-                    return ToolResult(output=f"Opened new tab with {url}")
+                        return ToolResult(error="'open_tab'操作需要URL")
+                    new_tab = await context.new_page()
+                    await new_tab.goto(url)
+                    return ToolResult(output=f"成功打开新标签页并导航到 {url}")
 
                 elif action == "close_tab":
-                    await context.close_current_tab()
-                    return ToolResult(output="Closed current tab")
+                    page = await context.get_current_page()
+                    await page.close()
+                    return ToolResult(output="成功关闭当前标签页")
 
                 # Utility actions
                 elif action == "wait":
-                    seconds_to_wait = seconds if seconds is not None else 3
-                    await asyncio.sleep(seconds_to_wait)
-                    return ToolResult(output=f"Waited for {seconds_to_wait} seconds")
+                    if seconds is None:
+                        return ToolResult(error="'wait'操作需要等待秒数")
+                    await asyncio.sleep(seconds)
+                    return ToolResult(output=f"成功等待 {seconds} 秒")
 
                 else:
-                    return ToolResult(error=f"Unknown action: {action}")
+                    return ToolResult(error=f"未知的操作: {action}")
 
             except Exception as e:
-                return ToolResult(error=f"Browser action '{action}' failed: {str(e)}")
+                return ToolResult(error=f"执行操作时出错: {str(e)}")
 
     async def get_current_state(
         self, context: Optional[BrowserContext] = None
     ) -> ToolResult:
         """
-        Get the current browser state as a ToolResult.
-        If context is not provided, uses self.context.
+        获取当前浏览器状态作为ToolResult。
+        如果未提供context，则使用self.context。
         """
         try:
-            # Use provided context or fall back to self.context
+            # 使用提供的context或回退到self.context
             ctx = context or self.context
             if not ctx:
-                return ToolResult(error="Browser context not initialized")
+                return ToolResult(error="浏览器上下文未初始化")
 
             state = await ctx.get_state()
 
-            # Create a viewport_info dictionary if it doesn't exist
+            # 如果不存在则创建viewport_info字典
             viewport_height = 0
             if hasattr(state, "viewport_info") and state.viewport_info:
                 viewport_height = state.viewport_info.height
             elif hasattr(ctx, "config") and hasattr(ctx.config, "browser_window_size"):
                 viewport_height = ctx.config.browser_window_size.get("height", 0)
 
-            # Take a screenshot for the state
+            # 为状态拍摄截图
             screenshot = await ctx.take_screenshot(full_page=True)
 
-            # Build the state info with all required fields
+            # 构建包含所有必需字段的状态信息
             state_info = {
                 "url": state.url,
                 "title": state.title,
                 "tabs": [tab.model_dump() for tab in state.tabs],
-                "help": "[0], [1], [2], etc., represent clickable indices corresponding to the elements listed. Clicking on these indices will navigate to or interact with the respective content behind them.",
+                "help": "[0], [1], [2] 等表示与列出的元素相对应的可点击索引。点击这些索引将导航到或与它们后面的相应内容交互。",
                 "interactive_elements": (
                     state.element_tree.clickable_elements_to_string()
                     if state.element_tree
@@ -546,10 +476,10 @@ Page content:
                 base64_image=screenshot,
             )
         except Exception as e:
-            return ToolResult(error=f"Failed to get browser state: {str(e)}")
+            return ToolResult(error=f"获取浏览器状态失败: {str(e)}")
 
     async def cleanup(self):
-        """Clean up browser resources."""
+        """清理浏览器资源。"""
         async with self.lock:
             if self.context is not None:
                 await self.context.close()
@@ -560,7 +490,7 @@ Page content:
                 self.browser = None
 
     def __del__(self):
-        """Ensure cleanup when object is destroyed."""
+        """确保在对象被销毁时进行清理。"""
         if self.browser is not None or self.context is not None:
             try:
                 asyncio.run(self.cleanup())
@@ -571,7 +501,7 @@ Page content:
 
     @classmethod
     def create_with_context(cls, context: Context) -> "BrowserUseTool[Context]":
-        """Factory method to create a BrowserUseTool with a specific context."""
+        """工厂方法，用于创建具有特定上下文的BrowserUseTool。"""
         tool = cls()
         tool.tool_context = context
         return tool

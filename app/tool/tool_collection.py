@@ -1,4 +1,4 @@
-"""Collection classes for managing multiple tools."""
+"""用于管理多个工具的集合类。"""
 from typing import Any, Dict, List
 
 from app.exceptions import ToolError
@@ -6,7 +6,7 @@ from app.tool.base import BaseTool, ToolFailure, ToolResult
 
 
 class ToolCollection:
-    """A collection of defined tools."""
+    """已定义工具的集合。"""
 
     def __init__(self, *tools: BaseTool):
         self.tools = tools
@@ -23,7 +23,7 @@ class ToolCollection:
     ) -> ToolResult:
         tool = self.tool_map.get(name)
         if not tool:
-            return ToolFailure(error=f"Tool {name} is invalid")
+            return ToolFailure(error=f"工具 {name} 无效")
         try:
             result = await tool(**tool_input)
             return result
@@ -31,7 +31,7 @@ class ToolCollection:
             return ToolFailure(error=e.message)
 
     async def execute_all(self) -> List[ToolResult]:
-        """Execute all tools in the collection sequentially."""
+        """按顺序执行集合中的所有工具。"""
         results = []
         for tool in self.tools:
             try:
